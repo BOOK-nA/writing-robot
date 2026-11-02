@@ -9,7 +9,7 @@ Student ID: 690631040
 |---|---|
 | `writing_robot.ipynb` | The main notebook. It is saved with all outputs, so you can see the results without running it. |
 | `interactive/` | Two web pages: the drawing tool and the keyframe demo. Download the files and open it in a browser. |
-| `results/` | Demo video link and result figures |
+| `results/` | Demo video link <https://youtu.be/i9-na74HMcw?si=pS2-LNUnVG4WafS4> and result figures |
 | `Writing_Robot_Anurak_Narak_690631040.pdf` | Presentation slides (pdf file has no interactive html file, prefer in canva) |
 | `Slide_in_Canva_Link.txt` | - Slides (Canva): <https://canva.link/m8xnonx9zaf2nq7> |
 | `requirements.txt` | Python packages |
