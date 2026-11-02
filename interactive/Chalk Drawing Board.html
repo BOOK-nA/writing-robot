@@ -1,0 +1,466 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Chalk Drawing Board</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: the whole 50 x 50 cm board as a square canvas on the left, tools and export on the right (stacked on narrow screens). */
+  :root {
+    --bg: #edf1ec; --surface: #f8faf7; --fg: #1a2420; --muted: #5a6a61; --line: #cdd7cf;
+    --accent: #1d6a4c; --accent-ink: #ffffff; --warn: #9a5b00; --warn-bg: #fbf0dc;
+    --board: #143f26; --board-edge: #0d2c1a; --chalk: #f3f0e6; --mark: #f0c34e;
+    --font-display: "Chakra Petch", "IBM Plex Sans Thai", system-ui, sans-serif;
+    --font-body: "IBM Plex Sans Thai", "Noto Sans Thai", "Leelawadee UI", Tahoma, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #111613; --surface: #18201b; --fg: #e3eae5; --muted: #94a59b; --line: #2b3830;
+      --accent: #8cc7a8; --accent-ink: #0f1a14; --warn: #f0b35a; --warn-bg: #2d2416; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #111613; --surface: #18201b; --fg: #e3eae5; --muted: #94a59b; --line: #2b3830;
+    --accent: #8cc7a8; --accent-ink: #0f1a14; --warn: #f0b35a; --warn-bg: #2d2416; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 22px 44px; display: grid; gap: 16px; }
+  header { display: grid; gap: 4px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  h1 { font-family: var(--font-display); font-weight: 600; font-size: clamp(1.5rem, 1.15rem + 1.4vw, 2.1rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--font-display); font-weight: 600; font-size: 1.1rem; margin: 0; }
+  .lede { margin: 0; color: var(--muted); max-width: 76ch; }
+  .main { display: grid; grid-template-columns: auto minmax(320px, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 900px) { .main { grid-template-columns: minmax(0, 1fr); } }
+  .board-col { display: grid; gap: 10px; justify-items: start; min-width: 0; }
+  .board-frame { background: var(--board-edge); border-radius: 10px; padding: 9px; position: relative; max-width: 100%; }
+  #board { display: block; border-radius: 3px; touch-action: none; cursor: crosshair; background: var(--board); max-width: 100%; }
+  .chip { position: absolute; top: 16px; right: 16px; font-size: 0.78rem; font-weight: 500; padding: 2px 10px; border-radius: 999px; background: var(--mark); color: #2a1f00; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button { font: inherit; font-weight: 500; font-size: 0.92rem; border: 1px solid var(--line); background: var(--surface); color: var(--fg); padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+  button:hover { border-color: var(--muted); }
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.danger-armed { border-color: var(--warn); color: var(--warn); background: var(--warn-bg); }
+  button:disabled { opacity: 0.45; cursor: default; }
+  label.toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--muted); cursor: pointer; }
+  .side { display: grid; gap: 14px; min-width: 0; }
+  section.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; min-width: 0; }
+  .field { display: grid; gap: 4px; }
+  .field label { font-size: 0.88rem; color: var(--muted); }
+  .field-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  input[type="range"] { flex: 1 1 140px; accent-color: var(--accent); }
+  .unit { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+  dl.readout { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; }
+  dl.readout dt { color: var(--muted); font-size: 0.9rem; }
+  dl.readout dd { margin: 0; font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .note { font-size: 0.86rem; color: var(--muted); margin: 0; }
+  .warnbox { font-size: 0.88rem; background: var(--warn-bg); color: var(--warn); border-radius: 6px; padding: 8px 10px; margin: 0; }
+  textarea#out { width: 100%; min-height: 140px; resize: vertical; font-family: var(--font-mono); font-size: 0.76rem; line-height: 1.5; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 10px; white-space: pre; overflow: auto; }
+  ol.steps { margin: 0; padding-left: 1.3em; display: grid; gap: 3px; font-size: 0.9rem; }
+  code { font-family: var(--font-mono); font-size: 0.85em; background: var(--bg); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
+  .status { font-size: 0.86rem; color: var(--accent); min-height: 1.4em; }
+  .legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 0.84rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 18px; height: 0; border-top: 2px dashed var(--muted); display: inline-block; }
+  .dot { width: 13px; height: 13px; border-radius: 50%; background: var(--mark); display: inline-block; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Writing Robot · MIT 6.4210 · Drake</div>
+    <h1>Chalk Drawing Board</h1>
+    <p class="lede">The green area is the robot’s whole board, 50 × 50 cm. The robot writes exactly where you draw, at the same size as the grid (1 small square = 1 cm). One drag without lifting is one stroke. The robot writes your strokes in the same order and direction that you drew them.</p>
+  </header>
+
+  <div class="main">
+    <div class="board-col">
+      <div class="board-frame">
+        <canvas id="board" aria-label="The robot’s board, 50 by 50 centimetres"></canvas>
+        <span class="chip" id="exampleChip">Example: “กา”, 8 cm tall</span>
+      </div>
+      <div class="toolbar">
+        <button id="undoBtn" type="button">↶ Undo</button>
+        <button id="clearBtn" type="button">Clear all</button>
+        <button id="playBtn" type="button" class="primary">▶ Show writing order</button>
+        <label class="toggle"><input type="checkbox" id="orderToggle" checked> Show order and direction</label>
+      </div>
+      <div class="legend" aria-hidden="true">
+        <span><span class="dot"></span>Start of a stroke (writing order)</span>
+        <span><span class="swatch"></span>Yellow dashed line = chalk lifted, moving to the next stroke</span>
+        <span><span class="swatch" style="border-top-color: #f0c34e"></span>Outer dashed frame = 2 cm from the board edge</span>
+      </div>
+    </div>
+
+    <div class="side">
+      <section class="panel" aria-labelledby="infoTitle">
+        <h2 id="infoTitle">What the robot will write</h2>
+        <dl class="readout">
+          <dt>Strokes</dt><dd id="rStrokes">–</dd>
+          <dt>Points</dt><dd id="rPoints">–</dd>
+          <dt>Drawing size (W × H)</dt><dd id="rSize">–</dd>
+          <dt>Drawing centre (u, v)</dt><dd id="rCenter">–</dd>
+          <dt>Estimated writing time</dt><dd id="rTime">–</dd>
+        </dl>
+        <p class="warnbox" id="edgeWarn" hidden></p>
+        <div class="field">
+          <label for="epsInput">Line detail (coarse = fewer points and faster writing, fine = smoother curves)</label>
+          <div class="field-row">
+            <input type="range" id="epsInput" min="0.0003" max="0.003" step="0.0001" value="0.001">
+            <span class="unit" id="epsLabel"></span>
+          </div>
+        </div>
+        <p class="note">The time uses the same rules as the trajectory in Section 6 of the notebook (writing at 3 cm/s, moving at 10 cm/s with the chalk lifted).</p>
+      </section>
+
+      <section class="panel" aria-labelledby="exportTitle">
+        <h2 id="exportTitle">Send to the notebook</h2>
+        <ol class="steps">
+          <li>Press <strong>Copy</strong>.</li>
+          <li>In Section 4 of the notebook, paste the text between <code>STROKES_JSON = r'''</code> and <code>'''</code>. Replace the example that is there.</li>
+          <li>Run that cell, then run the cells below it.</li>
+        </ol>
+        <div class="field-row">
+          <button id="copyBtn" type="button" class="primary">Copy</button>
+          <span class="status" id="copyStatus" role="status"></span>
+        </div>
+        <label for="out" class="note">Text to copy: (u, v) points in metres, (0, 0) = board centre</label>
+        <textarea id="out" readonly spellcheck="false"></textarea>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---- constants shared with the notebook (sections 2 and 6) ----
+  const HALF = 0.25;            // board is 0.5 x 0.5 m, (u, v) in [-0.25, 0.25]
+  const EDGE = 0.23;            // guide: 2 cm inside the edge (tested with a 46 x 46 cm square)
+  const CLAMP = 0.245;          // never let a point leave the board
+  const WRITE_SPEED = 0.03, TRAVEL_SPEED = 0.10, LIFT = 0.03, APPROACH = 0.005, PRESS = 0.002, DWELL = 0.6, T_START = 2.0;
+  const STORE_KEY = "chalk-board-v1";
+
+  function exampleStrokes() {   // "กา", 8 cm tall, centred on the board — clearly labelled as an example
+    const H = 0.08, cu = 1.095, cv = 0.5;
+    const ko = [[0.36, 0.0], [0.36, 0.55], [0.48, 0.63], [0.37, 0.72]];
+    for (let k = 0; k <= 14; k++) { const a = (165 - 165 * k / 14) * Math.PI / 180; ko.push([0.77 + 0.41 * Math.cos(a), 0.6 + 0.4 * Math.sin(a)]); }
+    ko.push([1.18, 0.0]);
+    const aa = [[1.36, 0.8], [1.43, 0.94], [1.57, 1.0], [1.71, 0.97], [1.8, 0.88], [1.83, 0.74], [1.83, 0.0]];
+    return [ko, aa].map(s => s.map(([u, v]) => [+((u - cu) * H).toFixed(4), +((v - cv) * H).toFixed(4)])).map(p => ({ raw: p, pts: p }));
+  }
+
+  const state = { strokes: exampleStrokes(), isExample: true, eps: 0.001, showOrder: true };
+  let current = null, playing = null;
+
+  // ---- geometry ----
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  const pathLen = p => p.reduce((L, q, i) => i ? L + dist(p[i - 1], q) : 0, 0);
+  function rdp(points, eps) {
+    if (points.length < 3) return points.slice();
+    const a = points[0], b = points[points.length - 1];
+    const abx = b[0] - a[0], aby = b[1] - a[1], ab2 = abx * abx + aby * aby;
+    let maxD = -1, idx = 0;
+    for (let i = 1; i < points.length - 1; i++) {
+      const p = points[i];
+      let d;
+      if (ab2 < 1e-14) d = dist(p, a);
+      else { const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * abx + (p[1] - a[1]) * aby) / ab2)); d = Math.hypot(p[0] - (a[0] + t * abx), p[1] - (a[1] + t * aby)); }
+      if (d > maxD) { maxD = d; idx = i; }
+    }
+    if (maxD <= eps) return [a, b];
+    return rdp(points.slice(0, idx + 1), eps).slice(0, -1).concat(rdp(points.slice(idx), eps));
+  }
+  function simplify(raw) {
+    if (!raw.length) return [];
+    if (pathLen(raw) < 0.002) return [raw[0]];   // a tap = a dot
+    return rdp(raw, state.eps);
+  }
+
+  // same timing rules as make_writing_trajectory() in the notebook; robot starts above the board centre
+  function plan() {
+    const strokes = state.strokes.map(s => s.pts).filter(p => p.length);
+    if (!strokes.length) return null;
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity, nearEdge = false;
+    strokes.forEach(p => p.forEach(([u, v]) => {
+      u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+      if (Math.abs(u) > EDGE || Math.abs(v) > EDGE) nearEdge = true;
+    }));
+    let t = 0, prev = [0, 0, LIFT], first = true;
+    const go = (p, speed, minDt) => { t += Math.max(Math.hypot(p[0] - prev[0], p[1] - prev[1], p[2] - prev[2]) / speed, minDt); prev = p; };
+    for (const s of strokes) {
+      go([s[0][0], s[0][1], LIFT], TRAVEL_SPEED, first ? T_START : 0.2); first = false;
+      go([s[0][0], s[0][1], APPROACH], TRAVEL_SPEED / 3, 0.2);
+      go([s[0][0], s[0][1], -PRESS], TRAVEL_SPEED / 3, 0.2);
+      t += DWELL;
+      for (let i = 1; i < s.length; i++) go([s[i][0], s[i][1], -PRESS], WRITE_SPEED, 0.05);
+      const e = s[s.length - 1]; go([e[0], e[1], LIFT], TRAVEL_SPEED / 3, 0.2);
+    }
+    go([0, 0, LIFT], TRAVEL_SPEED, 0.2);
+    return { n: strokes.length, points: strokes.reduce((a, p) => a + p.length, 0), w: u1 - u0, h: v1 - v0, cu: (u0 + u1) / 2, cv: (v0 + v1) / 2, time: t, nearEdge };
+  }
+
+  // ---- canvas ----
+  const canvas = document.getElementById("board"), ctx = canvas.getContext("2d");
+  let S = 600, dust = null;
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const X = u => (u + HALF) / (2 * HALF) * S;
+  const Y = v => (HALF - v) / (2 * HALF) * S;
+  const toBoard = e => { const r = canvas.getBoundingClientRect(); const s = r.width; return [(e.clientX - r.left) / s * 2 * HALF - HALF, HALF - (e.clientY - r.top) / s * 2 * HALF]; };
+  const clamp = ([u, v]) => [Math.max(-CLAMP, Math.min(CLAMP, u)), Math.max(-CLAMP, Math.min(CLAMP, v))];
+
+  let lastKey = "";
+  function resize() {
+    const main = document.querySelector(".main");
+    const wide = window.matchMedia("(min-width: 901px)").matches;
+    const avail = (wide ? main.clientWidth - 340 - 18 : main.clientWidth) - 18;
+    const vh = window.innerHeight - 200;
+    const size = Math.max(260, Math.min(avail, vh, 860));
+    const key = size + "|" + (window.devicePixelRatio || 1);
+    if (key === lastKey) return;
+    lastKey = key; S = size;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.style.width = S + "px"; canvas.style.height = S + "px";
+    canvas.width = Math.round(S * dpr); canvas.height = Math.round(S * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    makeDust(); render();
+  }
+  function makeDust() {
+    dust = document.createElement("canvas"); dust.width = Math.round(S); dust.height = Math.round(S);
+    const d = dust.getContext("2d"); let seed = 11;
+    const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    for (let i = 0; i < 30; i++) {
+      const x = rnd() * S, y = rnd() * S, r = (0.05 + rnd() * 0.12) * S;
+      const g = d.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, "rgba(255,255,255,0.035)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      d.fillStyle = g; d.fillRect(x - r, y - r, 2 * r, 2 * r);
+    }
+  }
+
+  function grid() {
+    ctx.save();
+    for (let c = -25; c <= 25; c++) {
+      const major = c % 5 === 0;
+      if (!major && S < 420) continue;
+      ctx.strokeStyle = c === 0 ? "rgba(243,240,230,0.30)" : major ? "rgba(243,240,230,0.13)" : "rgba(243,240,230,0.05)";
+      ctx.lineWidth = c === 0 ? 1.2 : 1;
+      const p = c / 100;
+      ctx.beginPath(); ctx.moveTo(X(p), 0); ctx.lineTo(X(p), S); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, Y(p)); ctx.lineTo(S, Y(p)); ctx.stroke();
+    }
+    // edge guide (2 cm in)
+    ctx.strokeStyle = "rgba(240,195,78,0.45)"; ctx.setLineDash([7, 6]); ctx.lineWidth = 1.2;
+    ctx.strokeRect(X(-EDGE), Y(EDGE), X(EDGE) - X(-EDGE), Y(-EDGE) - Y(EDGE)); ctx.setLineDash([]);
+    // labels
+    ctx.fillStyle = "rgba(243,240,230,0.5)"; ctx.font = `${Math.max(10, S * 0.017)}px ${css("--font-mono")}`;
+    for (const c of [-20, -10, 10, 20]) {
+      ctx.fillText(`${c}`, X(c / 100) + 3, Y(0) - 4);
+      ctx.fillText(`${c}`, X(0) + 4, Y(c / 100) - 3);
+    }
+    ctx.fillText("(0,0)", X(0) + 4, Y(0) - 4);
+    ctx.fillText("u →  cm", X(0.205), Y(0) + 15);
+    ctx.fillText("v ↑", X(0) + 4, Y(0.235));
+    ctx.restore();
+  }
+
+  function polyline(p, width, color, dash) {
+    if (!p.length) return;
+    ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = color; ctx.lineWidth = width;
+    if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); ctx.moveTo(X(p[0][0]), Y(p[0][1]));
+    if (p.length === 1) ctx.lineTo(X(p[0][0]) + 0.01, Y(p[0][1]));
+    for (let i = 1; i < p.length; i++) ctx.lineTo(X(p[i][0]), Y(p[i][1]));
+    ctx.stroke(); ctx.restore();
+  }
+  function orderMarks(strokes) {
+    const mark = css("--mark");
+    for (let i = 1; i < strokes.length; i++) {
+      const a = strokes[i - 1], b = strokes[i];
+      if (a.length && b.length) polyline([a[a.length - 1], b[0]], 1.2, "rgba(240,195,78,0.6)", [4, 5]);
+    }
+    strokes.forEach((p, i) => {
+      if (!p.length) return;
+      if (p.length > 1) {
+        const a = p[p.length - 2], b = p[p.length - 1];
+        const ang = Math.atan2(Y(b[1]) - Y(a[1]), X(b[0]) - X(a[0])), L = Math.max(8, S * 0.016), xb = X(b[0]), yb = Y(b[1]);
+        ctx.save(); ctx.fillStyle = mark; ctx.beginPath();
+        ctx.moveTo(xb + Math.cos(ang) * L * 0.6, yb + Math.sin(ang) * L * 0.6);
+        ctx.lineTo(xb + Math.cos(ang + 2.5) * L, yb + Math.sin(ang + 2.5) * L);
+        ctx.lineTo(xb + Math.cos(ang - 2.5) * L, yb + Math.sin(ang - 2.5) * L);
+        ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+      const r = Math.max(8, S * 0.013), x0 = X(p[0][0]), y0 = Y(p[0][1]);
+      ctx.save(); ctx.fillStyle = mark; ctx.beginPath(); ctx.arc(x0, y0, r, 0, 2 * Math.PI); ctx.fill();
+      ctx.fillStyle = "#2a1f00"; ctx.font = `600 ${r * 1.1}px ${css("--font-mono")}`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(String(i + 1), x0, y0 + 0.5); ctx.restore();
+    });
+  }
+  const chalkW = () => Math.max(3, 0.006 / (2 * HALF) * S);
+
+  function render() {
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = css("--board"); ctx.fillRect(0, 0, S, S);
+    if (dust) ctx.drawImage(dust, 0, 0, S, S);
+    grid();
+    const strokes = state.strokes.map(s => s.pts), chalk = css("--chalk");
+    if (playing) { drawPlayback(playing.progress, strokes, chalk); return; }
+    strokes.forEach(p => polyline(p, chalkW(), chalk));
+    if (current) polyline(current, chalkW(), chalk);
+    if (state.showOrder) orderMarks(strokes);
+    if (state.isExample) {
+      ctx.save(); ctx.fillStyle = "rgba(243,240,230,0.55)"; ctx.font = `${Math.max(12, S * 0.022)}px ${css("--font-body")}`;
+      ctx.textAlign = "center"; ctx.fillText("The example disappears when you start drawing", S / 2, Y(-0.12)); ctx.restore();
+    }
+  }
+
+  // ---- playback (pen-up moves dashed) ----
+  function timeline(strokes) {
+    const segs = []; let prev = [0, 0];
+    strokes.forEach(p => {
+      if (!p.length) return;
+      segs.push({ up: true, pts: [prev, p[0]], len: dist(prev, p[0]) / (TRAVEL_SPEED / WRITE_SPEED) + 0.01 });
+      segs.push({ up: false, pts: p, len: Math.max(pathLen(p), 0.004) });
+      prev = p[p.length - 1];
+    });
+    return { segs, total: segs.reduce((a, s) => a + s.len, 0) };
+  }
+  function partial(p, frac) {
+    if (p.length < 2) return p.slice();
+    const L = pathLen(p) * frac, out = [p[0]]; let acc = 0;
+    for (let i = 1; i < p.length; i++) {
+      const d = dist(p[i - 1], p[i]);
+      if (acc + d >= L) { const t = d ? (L - acc) / d : 0; out.push([p[i - 1][0] + t * (p[i][0] - p[i - 1][0]), p[i - 1][1] + t * (p[i][1] - p[i - 1][1])]); return out; }
+      acc += d; out.push(p[i]);
+    }
+    return out;
+  }
+  function drawPlayback(progress, strokes, chalk) {
+    const { segs, total } = timeline(strokes);
+    let remaining = progress * total, head = [0, 0];
+    for (const s of segs) {
+      if (remaining <= 0) break;
+      const p = partial(s.pts, Math.min(1, remaining / s.len));
+      if (s.up) polyline(p, 1.4, "rgba(240,195,78,0.85)", [4, 5]); else polyline(p, chalkW(), chalk);
+      head = p[p.length - 1]; remaining -= s.len;
+    }
+    ctx.save(); ctx.fillStyle = css("--mark"); ctx.beginPath(); ctx.arc(X(head[0]), Y(head[1]), Math.max(5, S * 0.009), 0, 2 * Math.PI); ctx.fill(); ctx.restore();
+  }
+  const playBtn = document.getElementById("playBtn");
+  function stopPlay() { playing = null; playBtn.textContent = "▶ Show writing order"; render(); }
+  playBtn.addEventListener("click", () => {
+    if (playing) { stopPlay(); return; }
+    const strokes = state.strokes.map(s => s.pts).filter(p => p.length);
+    if (!strokes.length) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const duration = reduce ? 0 : Math.min(10000, Math.max(2500, timeline(strokes).total * 12000));
+    playing = { progress: 0 }; playBtn.textContent = "■ Stop";
+    const t0 = performance.now();
+    const step = now => {
+      if (!playing) return;
+      playing.progress = duration ? Math.min(1, (now - t0) / duration) : 1; render();
+      if (playing.progress < 1) requestAnimationFrame(step); else setTimeout(() => { if (playing) stopPlay(); }, 900);
+    };
+    requestAnimationFrame(step);
+  });
+
+  // ---- drawing ----
+  canvas.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (playing) stopPlay();
+    if (state.isExample) { state.strokes = []; state.isExample = false; }
+    canvas.setPointerCapture(e.pointerId);
+    current = [clamp(toBoard(e))]; render();
+  });
+  canvas.addEventListener("pointermove", e => {
+    if (!current) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    for (const ev of (evs.length ? evs : [e])) { const p = clamp(toBoard(ev)); if (dist(p, current[current.length - 1]) > 0.0008) current.push(p); }
+    render();
+  });
+  function finishStroke() {
+    if (!current) return;
+    const raw = current.map(([u, v]) => [+u.toFixed(5), +v.toFixed(5)]);
+    current = null; state.strokes.push({ raw, pts: simplify(raw) }); save(); render(); update();
+  }
+  canvas.addEventListener("pointerup", finishStroke);
+  canvas.addEventListener("pointercancel", finishStroke);
+
+  // ---- controls ----
+  function undo() { if (playing) stopPlay(); if (state.isExample) return; state.strokes.pop(); save(); render(); update(); }
+  document.getElementById("undoBtn").addEventListener("click", undo);
+  window.addEventListener("keydown", e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && document.activeElement?.tagName !== "TEXTAREA") { e.preventDefault(); undo(); }
+  });
+  const clearBtn = document.getElementById("clearBtn"); let armTimer = null;
+  function disarm() { clearTimeout(armTimer); clearBtn.classList.remove("danger-armed"); clearBtn.textContent = "Clear all"; }
+  clearBtn.addEventListener("click", () => {
+    if (!clearBtn.classList.contains("danger-armed")) { clearBtn.classList.add("danger-armed"); clearBtn.textContent = "Click again to clear"; armTimer = setTimeout(disarm, 3000); return; }
+    disarm(); if (playing) stopPlay(); state.strokes = []; state.isExample = false; save(); render(); update();
+  });
+  const orderToggle = document.getElementById("orderToggle");
+  orderToggle.addEventListener("change", () => { state.showOrder = orderToggle.checked; render(); });
+  const epsInput = document.getElementById("epsInput"), epsLabel = document.getElementById("epsLabel");
+  epsInput.addEventListener("input", () => {
+    state.eps = parseFloat(epsInput.value);
+    if (!state.isExample) state.strokes.forEach(s => s.pts = simplify(s.raw));
+    save(); render(); update();
+  });
+
+  // ---- storage (per-viewer draft only) ----
+  function save() { try { localStorage.setItem(STORE_KEY, JSON.stringify({ strokes: state.strokes.map(s => s.raw), isExample: state.isExample, eps: state.eps })); } catch (e) { /* ignore */ } }
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY) || "null");
+      if (s && Array.isArray(s.strokes)) {
+        state.eps = s.eps || 0.001; state.isExample = !!s.isExample;
+        state.strokes = s.isExample ? exampleStrokes() : s.strokes.map(raw => ({ raw, pts: simplify(raw) }));
+      }
+    } catch (e) { /* defaults */ }
+  }
+
+  // ---- output ----
+  const out = document.getElementById("out");
+  function exportText() {
+    const rows = state.strokes.map(s => s.pts).filter(p => p.length)
+      .map(p => "  [" + p.map(([u, v]) => `[${u.toFixed(4)},${v.toFixed(4)}]`).join(",") + "]");
+    return `{"format": "chalk-board/1", "unit": "m", "height_m": 1.0,\n "strokes": [\n${rows.join(",\n")}\n]}`;
+  }
+  const cm = x => (x * 100).toFixed(1);
+  const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  function update() {
+    const p = plan(), set = (id, t) => document.getElementById(id).textContent = t, warn = document.getElementById("edgeWarn");
+    document.getElementById("exampleChip").hidden = !state.isExample;
+    epsLabel.textContent = `${(state.eps * 1000).toFixed(1)} mm`;
+    document.getElementById("undoBtn").disabled = state.isExample || !state.strokes.length;
+    playBtn.disabled = !state.strokes.length;
+    if (!p) { ["rStrokes", "rPoints", "rSize", "rCenter", "rTime"].forEach(id => set(id, "–")); warn.hidden = true; out.value = ""; return; }
+    set("rStrokes", plural(p.n, "stroke")); set("rPoints", plural(p.points, "point"));
+    set("rSize", `${cm(p.w)} × ${cm(p.h)} cm`); set("rCenter", `(${cm(p.cu)}, ${cm(p.cv)}) cm`);
+    set("rTime", `~${Math.round(p.time)} s`);
+    warn.hidden = !p.nearEdge;
+    warn.textContent = "Some strokes go past the dashed frame, close to the board edge. The robot can still reach them, but in our test with a large square the line sometimes had small gaps near the edge.";
+    out.value = exportText();
+  }
+  const copyBtn = document.getElementById("copyBtn"), copyStatus = document.getElementById("copyStatus");
+  copyBtn.addEventListener("click", () => {
+    const text = out.value;
+    if (!text) { copyStatus.textContent = "Nothing to copy yet. Draw something first."; return; }
+    const fallback = () => { out.focus(); out.select(); copyStatus.textContent = "The text is selected. Press Ctrl+C (Mac: ⌘C)."; };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => { copyStatus.textContent = state.isExample ? "Copied the example “กา”." : "Copied. Paste it into Section 4 of the notebook."; }, fallback);
+    } else fallback();
+  });
+
+  // ---- boot ----
+  load(); epsInput.value = state.eps; orderToggle.checked = state.showOrder;
+  new ResizeObserver(resize).observe(document.querySelector(".main"));
+  window.addEventListener("resize", resize);
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", render);
+  new MutationObserver(render).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  resize(); update();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(render);
+})();
+</script>
+
+</body></html>

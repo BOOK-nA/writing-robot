@@ -1,0 +1,368 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Chalk Circle Keyframes</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+  /* Layout: chalkboard on the left, timeline and zoom on the right; controls, numbers and the controller's question below */
+  :root {
+    --bg: #f3f5f1;
+    --surface: #ffffff;
+    --ink: #16201b;
+    --muted: #59665f;
+    --line: #d9e0d8;
+    --key: #e48f22;
+    --key-soft: #f5d7ab;
+    --tip: #d23b2e;
+    --accent: #a85a06;
+    --board: #1f4535;
+    --board-edge: #163327;
+    --chalk: #f2efe4;
+    --chalk-dim: rgba(242, 239, 228, 0.30);
+    --grid: rgba(242, 239, 228, 0.08);
+    --board-label: #f1c86a;
+    --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1512; --surface: #172019; --ink: #e6ece7; --muted: #9ba89f; --line: #2b372f;
+      --key: #f0a443; --key-soft: #5b4421; --tip: #ff6659; --accent: #f0a443;
+      --board-edge: #2f5c49;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1512; --surface: #172019; --ink: #e6ece7; --muted: #9ba89f; --line: #2b372f;
+    --key: #f0a443; --key-soft: #5b4421; --tip: #ff6659; --accent: #f0a443;
+    --board-edge: #2f5c49;
+    color-scheme: dark;
+  }
+
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5; }
+  .wrap {
+    max-width: 1080px; margin: 0 auto;
+    padding-block: 28px 48px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: grid; gap: 22px;
+  }
+  .wrap > * { min-width: 0; }
+  header { display: grid; gap: 6px; max-width: 68ch; }
+  .eyebrow { font-family: var(--body); font-size: 0.95rem; font-weight: 700; color: var(--accent); }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.6rem, 3.2vw, 2.2rem); line-height: 1.15; margin: 0; text-wrap: balance; }
+  h2 { font-family: var(--display); font-weight: 600; font-size: 1.1rem; margin: 0; text-wrap: balance; }
+  .lede { margin: 0; color: var(--muted); }
+  code, .mono { font-family: var(--mono); font-size: 0.9em; }
+
+  .stage { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 26px; align-items: start; }
+  @media (max-width: 760px) { .stage { grid-template-columns: minmax(0, 1fr); } }
+
+  figure.board { margin: 0; display: grid; gap: 8px; }
+  figure.board svg { width: 100%; max-width: 100%; height: auto; display: block; border-radius: 10px; background: var(--board); border: 3px solid var(--board-edge); }
+  figcaption { font-size: 0.85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .lg { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 18px; height: 0; border-top: 2px dashed var(--muted); display: inline-block; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; background: var(--key); }
+  .dot.tip { background: var(--tip); }
+
+  .time { display: grid; gap: 26px; min-width: 0; }
+  .panel { display: grid; gap: 8px; min-width: 0; }
+  .sub { margin: 0; font-size: 0.88rem; color: var(--muted); }
+  .bar svg { width: 100%; height: auto; display: block; }
+  .ends { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 0.82rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .frac { margin: 2px 0 0; text-align: center; font-family: var(--display); font-weight: 600; font-size: 1.15rem; }
+  .frac b { color: var(--tip); font-variant-numeric: tabular-nums; }
+
+  .controls { display: grid; gap: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+  .ctl { display: grid; grid-template-columns: 170px minmax(0, 1fr) 110px auto; gap: 10px 16px; align-items: center; }
+  .ctl label { font-weight: 700; }
+  .ctl output { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .scale { grid-column: 2; display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--muted); margin-top: -8px; }
+  input[type="range"] { width: 100%; accent-color: var(--key); }
+  button {
+    font: inherit; font-weight: 700; color: var(--ink); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 8px; padding: 7px 16px; cursor: pointer; min-width: 98px;
+  }
+  button:hover { border-color: var(--key); }
+  :focus-visible { outline: 3px solid var(--key); outline-offset: 2px; }
+  @media (max-width: 620px) {
+    .ctl { grid-template-columns: minmax(0, 1fr) auto; }
+    .ctl label { grid-column: 1 / -1; }
+    .ctl input { grid-column: 1; }
+    .ctl output { grid-column: 2; }
+    .ctl button { grid-column: 1 / -1; justify-self: start; }
+    .scale { grid-column: 1; }
+  }
+
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 620px) { .stats { grid-template-columns: minmax(0, 1fr); } }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; display: grid; gap: 2px; }
+  .stat .k { font-size: 0.85rem; color: var(--muted); }
+  .stat .v { font-family: var(--display); font-weight: 700; font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+  .note { margin: -6px 0 0; color: var(--muted); max-width: 80ch; }
+
+  .ask { display: grid; gap: 10px; }
+  pre {
+    margin: 0; overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--tip);
+    border-radius: 8px; padding: 14px 16px; font-family: var(--mono); font-size: 0.88rem; line-height: 1.7; font-variant-numeric: tabular-nums;
+  }
+  pre .q { color: var(--tip); font-weight: 600; }
+  pre .n { color: var(--accent); font-weight: 600; }
+
+  .code { display: grid; gap: 10px; }
+  .code ul { margin: 0; padding-left: 1.2em; display: grid; gap: 8px; max-width: 86ch; }
+  .code li code { background: var(--surface); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; overflow-wrap: anywhere; }
+  .eq { font-family: var(--mono); font-size: 0.88em; color: var(--ink); overflow-wrap: anywhere; }
+  .scroll { overflow-x: auto; }
+</style>
+
+<main class="wrap">
+  <header>
+    <span class="eyebrow">The robot draws the stroke at 3 cm/s</span>
+    <h1>Keyframes on a chalk circle</h1>
+    <p class="lede">RDP turns a 10 cm circle into straight segments. The tip moves between keyframes at constant speed.</p>
+  </header>
+
+  <section class="stage">
+    <figure class="board">
+      <svg id="board" viewBox="0 0 420 420" role="img" aria-label="Chalkboard with the true circle, the keyframes and the chalk tip at time t">
+        <g id="boardStatic"></g>
+        <g id="boardLive"></g>
+      </svg>
+      <figcaption>
+        <span class="lg"><span class="sw"></span>true circle</span>
+        <span class="lg"><span class="dot"></span>keyframe</span>
+        <span class="lg"><span class="dot tip"></span>chalk tip</span>
+        <span>grid 1 cm</span>
+      </figcaption>
+    </figure>
+
+    <div class="time">
+      <div class="panel">
+        <h2>Timeline</h2>
+        <div class="bar"><svg id="timeline" viewBox="0 0 600 44" aria-hidden="true"></svg></div>
+        <div class="ends"><span>0 s</span><span id="tEnd"></span></div>
+      </div>
+      <div class="panel">
+        <h2>Current segment</h2>
+        <div class="bar"><svg id="zoom" viewBox="0 0 600 44" aria-hidden="true"></svg></div>
+        <div class="ends"><span id="zL"></span><span id="zR"></span></div>
+        <p class="frac"><b id="fracPct"></b> done</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="controls" aria-label="Controls">
+    <div class="ctl">
+      <label for="eps">RDP ε</label>
+      <input type="range" id="eps" min="0" max="4" step="1" value="2">
+      <output id="epsOut" for="eps"></output>
+      <span></span>
+      <div class="scale"><span>coarse</span><span>fine</span></div>
+    </div>
+    <div class="ctl">
+      <label for="time">Time t</label>
+      <input type="range" id="time" min="0" max="10" step="0.01" value="3.95">
+      <output id="timeOut" for="time"></output>
+      <button id="play" type="button">▶ Play</button>
+    </div>
+  </section>
+
+  <section class="stats" aria-label="Numbers for this setting">
+    <div class="stat"><span class="k">Keyframes</span><span class="v" id="sPts"></span></div>
+    <div class="stat"><span class="k">Drawing time</span><span class="v" id="sTime"></span></div>
+    <div class="stat"><span class="k">Max error</span><span class="v" id="sGap"></span></div>
+  </section>
+  <p class="note" id="note"></p>
+
+  <section class="ask">
+    <h2>Where is the tip at time t?</h2>
+    <pre id="askBox"></pre>
+  </section>
+
+</main>
+
+<script>
+(() => {
+  // ---- the same numbers as the notebook ----
+  const R = 0.05;            // circle radius [m] (10 cm circle)
+  const WRITE_SPEED = 0.03;  // [m/s]
+  const MIN_DT = 0.05;       // [s]
+  const N_RAW = 1024;        // dense points of the "drawn" circle before RDP
+  const EPS = [0.020, 0.005, 0.001, 0.0003, 0.0001]; // [m], slider stops (each gives a different result)
+
+  const RAW = [];
+  for (let i = 0; i <= N_RAW; i++) {
+    const a = 2 * Math.PI * i / N_RAW;
+    RAW.push([R * Math.cos(a), R * Math.sin(a)]);
+  }
+
+  // RDP, the same rule as the chalk board tool
+  const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+  function rdp(points, eps) {
+    if (points.length < 3) return points.slice();
+    const a = points[0], b = points[points.length - 1];
+    const abx = b[0] - a[0], aby = b[1] - a[1], ab2 = abx * abx + aby * aby;
+    let maxD = -1, idx = 0;
+    for (let i = 1; i < points.length - 1; i++) {
+      const p = points[i];
+      let d;
+      if (ab2 < 1e-14) d = dist(p, a);
+      else {
+        const t = Math.max(0, Math.min(1, ((p[0] - a[0]) * abx + (p[1] - a[1]) * aby) / ab2));
+        d = Math.hypot(p[0] - (a[0] + t * abx), p[1] - (a[1] + t * aby));
+      }
+      if (d > maxD) { maxD = d; idx = i; }
+    }
+    if (maxD <= eps) return [a, b];
+    return rdp(points.slice(0, idx + 1), eps).slice(0, -1).concat(rdp(points.slice(idx), eps));
+  }
+
+  function makePlan(eps) {
+    const K = rdp(RAW, eps);
+    const times = [0];
+    let gap = 0;
+    for (let i = 1; i < K.length; i++) {
+      times.push(times[i - 1] + Math.max(dist(K[i], K[i - 1]) / WRITE_SPEED, MIN_DT));
+      const mx = (K[i][0] + K[i - 1][0]) / 2, my = (K[i][1] + K[i - 1][1]) / 2;
+      gap = Math.max(gap, R - Math.hypot(mx, my)); // largest gap is at the middle of a chord
+    }
+    return { eps, K, times, T: times[times.length - 1], gap };
+  }
+  const PLANS = EPS.map(makePlan);
+
+  // ---- state ----
+  const $ = id => document.getElementById(id);
+  const epsIn = $("eps"), timeIn = $("time"), playBtn = $("play");
+  const state = { idx: 2, t: 3.95, playing: false, last: 0 };
+
+  function locate(P, t) {
+    const ts = P.times, n = ts.length;
+    if (t >= ts[n - 1]) return { k: n - 2, s: 1 };
+    let k = 0;
+    while (k < n - 2 && ts[k + 1] <= t) k++;
+    return { k, s: (t - ts[k]) / (ts[k + 1] - ts[k]) };
+  }
+  const lerp = (a, b, s) => [a[0] + s * (b[0] - a[0]), a[1] + s * (b[1] - a[1])];
+
+  // ---- board drawing (30 px per cm, centre at 210, 210) ----
+  const S = 3000, C = 210;
+  const X = u => C + u * S, Y = v => C - v * S;
+  const NS = "http://www.w3.org/2000/svg";
+
+  (function drawStatic() {
+    let h = "";
+    for (let i = -7; i <= 7; i++) {
+      const p = C + i * 30;
+      h += `<line x1="${p}" y1="0" x2="${p}" y2="420" stroke="var(--grid)" stroke-width="1"/>`;
+      h += `<line x1="0" y1="${p}" x2="420" y2="${p}" stroke="var(--grid)" stroke-width="1"/>`;
+    }
+    h += `<circle cx="${C}" cy="${C}" r="${R * S}" fill="none" stroke="var(--chalk-dim)" stroke-width="1.5" stroke-dasharray="5 5"/>`;
+    $("boardStatic").innerHTML = h;
+  })();
+
+  const f2 = x => x.toFixed(2);
+  const cm = p => `(${f2(p[0] * 100)}, ${f2(p[1] * 100)})`;
+
+  function render() {
+    const P = PLANS[state.idx];
+    const t = Math.min(state.t, P.T);
+    const { k, s } = locate(P, t);
+    const K = P.K, n = K.length;          // n keyframes (the last one is back at point 1)
+    const tip = lerp(K[k], K[k + 1], s);
+
+    // board
+    let h = "";
+    const all = K.map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+    h += `<polyline points="${all}" fill="none" stroke="var(--chalk-dim)" stroke-width="1.5"/>`;
+    h += `<line x1="${X(K[k][0])}" y1="${Y(K[k][1])}" x2="${X(K[k + 1][0])}" y2="${Y(K[k + 1][1])}" stroke="var(--key)" stroke-width="6" stroke-linecap="round" opacity="0.55"/>`;
+    const done = K.slice(0, k + 1).concat([tip]).map(p => `${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+    h += `<polyline points="${done}" fill="none" stroke="var(--chalk)" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+    const every = (n - 1) <= 32 ? 1 : 4;
+    for (let i = 0; i < n - 1; i++) {
+      const p = K[i];
+      h += `<circle cx="${X(p[0])}" cy="${Y(p[1])}" r="${n > 40 ? 2.6 : 4}" fill="var(--key)"/>`;
+      if (i % every === 0) {
+        const a = Math.atan2(p[1], p[0]), rr = R * S + 20;
+        h += `<text x="${(C + rr * Math.cos(a)).toFixed(1)}" y="${(C - rr * Math.sin(a) + 4.5).toFixed(1)}" text-anchor="middle" font-family="var(--mono)" font-size="13" fill="var(--board-label)">${i + 1}</text>`;
+      }
+    }
+    h += `<circle cx="${X(tip[0])}" cy="${Y(tip[1])}" r="8" fill="var(--tip)" stroke="#ffffff" stroke-width="2.5"/>`;
+    $("boardLive").innerHTML = h;
+
+    // timeline
+    const x0 = 12, x1 = 588, tx = tt => x0 + (x1 - x0) * tt / P.T;
+    let g = `<line x1="${x0}" y1="22" x2="${x1}" y2="22" stroke="var(--line)" stroke-width="6" stroke-linecap="round"/>`;
+    g += `<line x1="${x0}" y1="22" x2="${tx(t).toFixed(1)}" y2="22" stroke="var(--key-soft)" stroke-width="6" stroke-linecap="round"/>`;
+    P.times.forEach((tk, i) => {
+      const xk = tx(tk).toFixed(1), cur = i === k || i === k + 1;
+      g += `<line x1="${xk}" y1="${cur ? 9 : 13}" x2="${xk}" y2="${cur ? 35 : 31}" stroke="var(--key)" stroke-width="${cur ? 3 : 1.6}"/>`;
+    });
+    g += `<line x1="${tx(t).toFixed(1)}" y1="4" x2="${tx(t).toFixed(1)}" y2="40" stroke="var(--tip)" stroke-width="3"/>`;
+    $("timeline").innerHTML = g;
+    $("tEnd").textContent = `${f2(P.T)} s`;
+
+    // zoom
+    const zx = x0 + (x1 - x0) * s;
+    let z = `<line x1="${x0}" y1="22" x2="${x1}" y2="22" stroke="var(--key-soft)" stroke-width="8"/>`;
+    z += `<line x1="${x0}" y1="22" x2="${zx.toFixed(1)}" y2="22" stroke="var(--key)" stroke-width="8"/>`;
+    z += `<line x1="${x0}" y1="6" x2="${x0}" y2="38" stroke="var(--key)" stroke-width="3"/>`;
+    z += `<line x1="${x1}" y1="6" x2="${x1}" y2="38" stroke="var(--key)" stroke-width="3"/>`;
+    z += `<line x1="${zx.toFixed(1)}" y1="2" x2="${zx.toFixed(1)}" y2="42" stroke="var(--tip)" stroke-width="3"/>`;
+    $("zoom").innerHTML = z;
+    const ka = k + 1, kb = k + 2, ta = P.times[k], tb = P.times[k + 1];
+    $("zL").textContent = `point ${ka} · t = ${f2(ta)} s`;
+    $("zR").textContent = `point ${kb} · t = ${f2(tb)} s`;
+    $("fracPct").textContent = `${Math.round(s * 100)}%`;
+
+    // controls and numbers
+    timeIn.max = P.T.toFixed(2);
+    timeIn.value = t.toFixed(2);
+    $("timeOut").textContent = `t = ${f2(t)} s`;
+    $("epsOut").textContent = `ε = ${(P.eps * 1000).toFixed(P.eps < 0.001 ? 1 : 0)} mm`;
+    $("sPts").textContent = `${n} points`;
+    $("sTime").textContent = `${f2(P.T)} s`;
+    $("sGap").textContent = `${(P.gap * 1000).toFixed(2)} mm`;
+    const L = dist(K[0], K[1]);
+    $("note").textContent = `Each segment: ${f2(L * 100)} cm ÷ 3 cm/s = ${f2(L / WRITE_SPEED)} s`;
+
+    // the controller's question
+    $("askBox").innerHTML =
+      `<span class="n">1</span>  point ${ka} → point ${kb}\n` +
+      `<span class="n">2</span>  s = (${f2(t)} − ${f2(ta)}) / (${f2(tb)} − ${f2(ta)}) = ${f2(s)}\n` +
+      `<span class="n">3</span>  p = p${ka} + s · (p${kb} − p${ka}) = <b>${cm(tip)} cm</b>`;
+  }
+
+  // ---- events ----
+  epsIn.addEventListener("input", () => { state.idx = +epsIn.value; render(); });
+  timeIn.addEventListener("input", () => { state.t = +timeIn.value; if (state.playing) stop(); render(); });
+
+  function frame(now) {
+    if (!state.playing) return;
+    const dt = (now - state.last) / 1000;
+    state.last = now;
+    const T = PLANS[state.idx].T;
+    state.t = Math.min(state.t + dt, T);
+    render();
+    if (state.t >= T) { stop(); return; }
+    requestAnimationFrame(frame);
+  }
+  function stop() { state.playing = false; playBtn.textContent = "▶ Play"; }
+  playBtn.addEventListener("click", () => {
+    if (state.playing) { stop(); return; }
+    if (state.t >= PLANS[state.idx].T - 1e-6) state.t = 0;
+    state.playing = true;
+    playBtn.textContent = "❚❚ Pause";
+    state.last = performance.now();
+    requestAnimationFrame(frame);
+  });
+
+  epsIn.value = String(state.idx);
+  render();
+})();
+</script>
+
+</body></html>
