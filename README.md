@@ -11,7 +11,7 @@ Student ID: 690631040
 | `interactive/` | Two web pages: the drawing tool and the keyframe demo. Download the files and open it in a browser. |
 | `results/` | Demo video link and result figures |
 | `Writing_Robot_Anurak_Narak_690631040.pdf` | Presentation slides (pdf file has no interactive html file, prefer in canva) |
-| `Slide_in_Canva_Link.txt` | Slide in canva |
+| `Slide_in_Canva_Link.txt` | - Slides (Canva): <https://canva.link/m8xnonx9zaf2nq7> |
 | `requirements.txt` | Python packages |
 
 ## How to run
